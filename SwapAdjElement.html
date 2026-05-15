@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swap Adjacent Elements</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      --ink: #172026;
+      --muted: #5e6a72;
+      --page: #eef3f6;
+      --panel: #ffffff;
+      --line: #cbd7df;
+      --accent: #1261a6;
+      --accent-2: #d46f22;
+      --good: #18794e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.1rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .simulator,
+    .explain {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(18, 97, 166, 0.14);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button:disabled {
+      border-color: var(--line);
+      background: #dce5ea;
+      color: #66727a;
+      cursor: not-allowed;
+    }
+
+    .case-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .case-tab.active {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+      color: #fff;
+    }
+
+    .stage {
+      min-height: 250px;
+      padding: 18px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #f9fbfc;
+      overflow-x: auto;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: max-content;
+      min-height: 120px;
+      padding: 26px 6px 18px;
+    }
+
+    .node {
+      position: relative;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 74px;
+      height: 56px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      transition: transform 260ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .node::after {
+      content: attr(data-name);
+      position: absolute;
+      bottom: -24px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .node.focus {
+      border-color: var(--accent-2);
+      background: #fff1df;
+      transform: translateY(-12px);
+    }
+
+    .node.done {
+      border-color: var(--good);
+      background: #dcf6e9;
+    }
+
+    .pointer {
+      flex: 0 0 auto;
+      min-width: 46px;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 800;
+      transition: color 180ms ease, transform 180ms ease;
+    }
+
+    .pointer.active {
+      color: var(--accent);
+      transform: scale(1.12);
+    }
+
+    .double-pointer {
+      display: grid;
+      gap: 4px;
+    }
+
+    .message {
+      min-height: 28px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .code-line {
+      display: block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: #dfeff7;
+    }
+
+    .code-line.active {
+      background: rgba(212, 111, 34, 0.35);
+      color: #fff;
+    }
+
+    .explain {
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #172026;
+      color: #f7fbfd;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout,
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>SwapAdjElement</h1>
+      <p>Swap adjacent linked-list nodes by changing links only. The data values stay inside their original nodes.</p>
+    </header>
+
+    <div class="layout">
+      <section class="simulator">
+        <div class="case-tabs" aria-label="Cases">
+          <button id="single-tab" class="case-tab active" type="button" data-case="single">Case 1: Single Linked List</button>
+          <button id="double-tab" class="case-tab secondary" type="button" data-case="double">Case 2: Double Linked List</button>
+        </div>
+
+        <div class="controls">
+          <label>
+            Node values
+            <input id="values-input" value="A, B, C, D, E" aria-label="Node values">
+          </label>
+          <label>
+            Swap pair
+            <select id="pair-select" aria-label="Swap adjacent pair"></select>
+          </label>
+        </div>
+
+        <div class="buttons">
+          <button id="run" type="button">Run Animation</button>
+          <button id="step" class="secondary" type="button">Step</button>
+          <button id="reset" class="secondary" type="button">Reset</button>
+        </div>
+
+        <div class="stage">
+          <div id="list-row" class="list-row" aria-label="Linked list animation"></div>
+        </div>
+        <div id="message" class="message" aria-live="polite"></div>
+      </section>
+
+      <aside class="explain">
+        <div class="explain-block">
+          <h2>Condition</h2>
+          <p>Do not swap node data. Only redirect the links between nodes.</p>
+        </div>
+
+        <div class="explain-block" id="single-explain">
+          <h2>Case 1 Approach</h2>
+          <ol>
+            <li>Let <code>prev</code> be the node before the pair, <code>x</code> be the first node, and <code>y</code> be the next node.</li>
+            <li>Point <code>prev.next</code> to <code>y</code>. If <code>x</code> is the head, update the head to <code>y</code>.</li>
+            <li>Point <code>x.next</code> to <code>y.next</code>.</li>
+            <li>Point <code>y.next</code> to <code>x</code>.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block" id="double-explain" hidden>
+          <h2>Case 2 Approach</h2>
+          <ol>
+            <li>Let <code>before</code> be <code>x.prev</code> and <code>after</code> be <code>y.next</code>.</li>
+            <li>Connect <code>before.next</code> to <code>y</code> if <code>before</code> exists.</li>
+            <li>Connect <code>y.prev</code> to <code>before</code>, then <code>y.next</code> to <code>x</code>.</li>
+            <li>Connect <code>x.prev</code> to <code>y</code>, then <code>x.next</code> to <code>after</code>.</li>
+            <li>Connect <code>after.prev</code> to <code>x</code> if <code>after</code> exists.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block">
+          <h2>Pseudocode</h2>
+          <pre id="code-block"><code></code></pre>
+        </div>
+
+        <div class="explain-block">
+          <h2>Running Time</h2>
+          <p>After the adjacent pair is found, the swap takes <code>O(1)</code> time because it changes a fixed number of links. If you must search for the pair first, total time is <code>O(N)</code>. Extra space is <code>O(1)</code>.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const valuesInput = document.querySelector("#values-input");
+    const pairSelect = document.querySelector("#pair-select");
+    const listRow = document.querySelector("#list-row");
+    const message = document.querySelector("#message");
+    const runButton = document.querySelector("#run");
+    const stepButton = document.querySelector("#step");
+    const resetButton = document.querySelector("#reset");
+    const caseTabs = [...document.querySelectorAll(".case-tab")];
+    const singleExplain = document.querySelector("#single-explain");
+    const doubleExplain = document.querySelector("#double-explain");
+    const codeBlock = document.querySelector("#code-block code");
+
+    const code = {
+      single: [
+        "prev.next = y    // or head = y",
+        "x.next = y.next",
+        "y.next = x"
+      ],
+      double: [
+        "before.next = y  // if before exists",
+        "y.prev = before",
+        "y.next = x",
+        "x.prev = y",
+        "x.next = after",
+        "after.prev = x   // if after exists"
+      ]
+    };
+
+    let mode = "single";
+    let values = [];
+    let selectedIndex = 0;
+    let order = [];
+    let stepIndex = 0;
+    let timer = null;
+
+    function parseValues(text) {
+      return text.split(",").map((value) => value.trim()).filter(Boolean);
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+
+      runButton.disabled = false;
+    }
+
+    function fillPairOptions() {
+      const oldValue = pairSelect.value;
+      pairSelect.innerHTML = "";
+
+      for (let index = 0; index < Math.max(values.length - 1, 0); index += 1) {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = `${values[index]} and ${values[index + 1]}`;
+        pairSelect.append(option);
+      }
+
+      pairSelect.value = oldValue && Number(oldValue) < values.length - 1 ? oldValue : "0";
+      selectedIndex = Number(pairSelect.value || 0);
+    }
+
+    function renderCode() {
+      codeBlock.innerHTML = "";
+
+      code[mode].forEach((line, index) => {
+        const span = document.createElement("span");
+        span.className = "code-line";
+        span.classList.toggle("active", index === stepIndex - 1);
+        span.textContent = line;
+        codeBlock.append(span);
+      });
+    }
+
+    function renderList() {
+      listRow.innerHTML = "";
+
+      order.forEach((originalIndex, visualIndex) => {
+        const node = document.createElement("div");
+        node.className = "node";
+        node.dataset.name = `node ${originalIndex + 1}`;
+        node.textContent = values[originalIndex];
+
+        if (originalIndex === selectedIndex || originalIndex === selectedIndex + 1) {
+          node.classList.add(stepIndex >= 1 ? "done" : "focus");
+        }
+
+        listRow.append(node);
+
+        if (visualIndex < order.length - 1) {
+          const pointer = document.createElement("div");
+          pointer.className = mode === "double" ? "pointer double-pointer" : "pointer";
+          pointer.classList.toggle("active", stepIndex > 0);
+          pointer.innerHTML = mode === "double" ? "<span>&lt;-</span><span>-&gt;</span>" : "-&gt;";
+          listRow.append(pointer);
+        }
+      });
+    }
+
+    function render() {
+      renderList();
+      renderCode();
+      singleExplain.hidden = mode !== "single";
+      doubleExplain.hidden = mode !== "double";
+      caseTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.case === mode));
+    }
+
+    function reset() {
+      stop();
+      values = parseValues(valuesInput.value);
+      fillPairOptions();
+      order = values.map((_, index) => index);
+      stepIndex = 0;
+
+      if (values.length < 2) {
+        message.textContent = "Enter at least two nodes to swap adjacent elements.";
+      } else {
+        message.textContent = `Ready to swap ${values[selectedIndex]} and ${values[selectedIndex + 1]} by changing links.`;
+      }
+
+      render();
+    }
+
+    function applyFinalSwap() {
+      order = values.map((_, index) => index);
+      [order[selectedIndex], order[selectedIndex + 1]] = [order[selectedIndex + 1], order[selectedIndex]];
+    }
+
+    function step() {
+      if (values.length < 2) {
+        reset();
+        return false;
+      }
+
+      const lines = code[mode];
+
+      if (stepIndex >= lines.length) {
+        message.textContent = "Done. The nodes changed places, but their data values were not copied.";
+        stop();
+        return false;
+      }
+
+      stepIndex += 1;
+
+      if (stepIndex === lines.length) {
+        applyFinalSwap();
+      }
+
+      message.textContent = lines[stepIndex - 1];
+      render();
+      return true;
+    }
+
+    runButton.addEventListener("click", () => {
+      reset();
+      runButton.disabled = true;
+      timer = setInterval(() => {
+        if (!step()) {
+          stop();
+        }
+      }, 900);
+    });
+
+    stepButton.addEventListener("click", () => {
+      if (timer) {
+        stop();
+      }
+      step();
+    });
+
+    resetButton.addEventListener("click", reset);
+    pairSelect.addEventListener("change", reset);
+    valuesInput.addEventListener("change", reset);
+
+    caseTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        mode = tab.dataset.case;
+        reset();
+      });
+    });
+
+    reset();
+  </script>
+</body>
+</html>
