@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gravity Environment</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background: #111517;
+      color: #f5f7f8;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .toolbar {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 980px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(17, 21, 23, 0.86);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    button,
+    select,
+    input {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 6px;
+      background: #20282b;
+      color: #f5f7f8;
+      font: inherit;
+    }
+
+    button,
+    select {
+      min-height: 40px;
+      padding: 0 12px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover,
+    button:focus,
+    select:focus,
+    input:focus {
+      border-color: #8cc6ff;
+      outline: none;
+    }
+
+    button.active {
+      background: #1261a6;
+      border-color: #8cc6ff;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      color: rgba(245, 247, 248, 0.82);
+      font-size: 0.95rem;
+    }
+
+    input[type="range"] {
+      width: 140px;
+      accent-color: #8cc6ff;
+    }
+
+    .status {
+      margin-left: auto;
+      min-width: 124px;
+      color: rgba(245, 247, 248, 0.72);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .object-panel {
+      position: fixed;
+      top: 92px;
+      right: 16px;
+      width: min(280px, calc(100vw - 32px));
+      max-height: calc(100vh - 112px);
+      padding: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: rgba(17, 21, 23, 0.86);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .object-panel h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .object-picker {
+      display: grid;
+      gap: 8px;
+      max-height: calc(100vh - 170px);
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      list-style: none;
+    }
+
+    .object-choice {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 42px;
+      padding: 7px 9px;
+      text-align: left;
+    }
+
+    .object-choice.active {
+      background: #1261a6;
+      border-color: #8cc6ff;
+    }
+
+    .object-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      font-weight: 800;
+    }
+
+    .object-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 760px) {
+      .toolbar {
+        flex-wrap: wrap;
+      }
+
+      .status {
+        width: 100%;
+        margin-left: 0;
+        text-align: left;
+      }
+
+      input[type="range"] {
+        width: 110px;
+      }
+
+      .object-panel {
+        top: auto;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+        max-height: 34vh;
+      }
+
+      .object-picker {
+        max-height: calc(34vh - 52px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="world" aria-label="Interactive gravity simulation"></canvas>
+
+  <div class="toolbar">
+    <div class="tool-group">
+      <label>
+        Size
+        <input id="size" type="range" min="18" max="72" value="38">
+      </label>
+    </div>
+
+    <div class="tool-group">
+      <label>
+        Gravity
+        <input id="gravity" type="range" min="0" max="2" step="0.05" value="0.85">
+      </label>
+    </div>
+
+    <button id="clear" type="button">Clear</button>
+    <div id="status" class="status">0 objects</div>
+  </div>
+
+  <aside class="object-panel" aria-label="Object dojo">
+    <h2>Object List</h2>
+    <ul id="object-picker" class="object-picker" aria-label="Object list"></ul>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+  <script>
+    const canvas = document.querySelector("#world");
+    const status = document.querySelector("#status");
+    const sizeInput = document.querySelector("#size");
+    const gravityInput = document.querySelector("#gravity");
+    const clearButton = document.querySelector("#clear");
+    const objectPicker = document.querySelector("#object-picker");
+
+    if (!window.Matter) {
+      status.textContent = "Physics engine could not load. Check your internet connection and reload.";
+      clearButton.disabled = true;
+      sizeInput.disabled = true;
+      gravityInput.disabled = true;
+    } else {
+      const { Bodies, Body, Composite, Engine, Events, Render, Runner, Sleeping, World } = Matter;
+      const objectTypes = [
+        { id: "ball", label: "Ball", icon: "O", build: (x, y, size, options) => Bodies.circle(x, y, size / 2, options) },
+        { id: "box", label: "Box", icon: "[]", build: (x, y, size, options) => Bodies.rectangle(x, y, size, size, options) },
+        { id: "brick", label: "Brick", icon: "BR", build: (x, y, size, options) => Bodies.rectangle(x, y, size * 1.7, size * 0.72, options) },
+        { id: "plank", label: "Plank", icon: "-", build: (x, y, size, options) => Bodies.rectangle(x, y, size * 2.5, size * 0.35, options) },
+        { id: "triangle", label: "Triangle", icon: "TR", build: (x, y, size, options) => Bodies.polygon(x, y, 3, size * 0.58, options) },
+        { id: "pentagon", label: "Pentagon", icon: "P5", build: (x, y, size, options) => Bodies.polygon(x, y, 5, size * 0.55, options) },
+        { id: "hexagon", label: "Hexagon", icon: "H6", build: (x, y, size, options) => Bodies.polygon(x, y, 6, size * 0.55, options) },
+        { id: "wheel", label: "Wheel", icon: "WH", build: (x, y, size, options) => Bodies.circle(x, y, size / 2, { ...options, friction: 0.02, restitution: 0.62 }) }
+      ];
+      const engine = Engine.create();
+      const world = engine.world;
+      const runner = Runner.create();
+      let render;
+      let currentObjectType = objectTypes[0];
+      let bounds = [];
+      let launch = null;
+
+    function objectCount() {
+      return Composite.allBodies(world).filter((body) => !body.isStatic).length;
+    }
+
+    function updateStatus() {
+      const count = objectCount();
+      status.textContent = `${count} object${count === 1 ? "" : "s"}`;
+    }
+
+    function renderObjectPicker() {
+      objectPicker.innerHTML = "";
+
+      for (const objectType of objectTypes) {
+        const row = document.createElement("li");
+        const button = document.createElement("button");
+        const icon = document.createElement("span");
+        const label = document.createElement("span");
+
+        button.className = "object-choice";
+        button.classList.toggle("active", objectType === currentObjectType);
+        button.type = "button";
+        icon.className = "object-icon";
+        icon.textContent = objectType.icon;
+        label.className = "object-label";
+        label.textContent = objectType.label;
+        button.append(icon, label);
+        button.addEventListener("click", () => {
+          currentObjectType = objectType;
+          renderObjectPicker();
+        });
+        row.append(button);
+        objectPicker.append(row);
+      }
+    }
+
+    function randomColor() {
+      const colors = ["#8cc6ff", "#ffcf70", "#ff8f8f", "#7ee0b3", "#d7a1ff", "#f5f7f8"];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function makeBounds() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const thickness = 80;
+
+      if (bounds.length) {
+        World.remove(world, bounds);
+      }
+
+      bounds = [
+        Bodies.rectangle(width / 2, height + thickness / 2, width, thickness, { isStatic: true }),
+        Bodies.rectangle(width / 2, -thickness / 2, width, thickness, { isStatic: true }),
+        Bodies.rectangle(-thickness / 2, height / 2, thickness, height, { isStatic: true }),
+        Bodies.rectangle(width + thickness / 2, height / 2, thickness, height, { isStatic: true })
+      ];
+
+      World.add(world, bounds);
+    }
+
+    function createObject(x, y, isStatic = false) {
+      const size = Number(sizeInput.value);
+      const color = randomColor();
+      const options = {
+        isStatic,
+        restitution: 0.45,
+        friction: 0.08,
+        frictionAir: 0.002,
+        sleepThreshold: Infinity,
+        render: {
+          fillStyle: color,
+          strokeStyle: "rgba(255, 255, 255, 0.7)",
+          lineWidth: 1
+        }
+      };
+
+      const body = currentObjectType.build(x, y, size, options);
+
+      Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.12);
+      World.add(world, body);
+      updateStatus();
+      return body;
+    }
+
+    function drawLaunchVector() {
+      if (!launch) {
+        return;
+      }
+
+      const context = render.context;
+      const dx = (launch.current.x - launch.start.x) * 0.5;
+      const dy = (launch.current.y - launch.start.y) * 0.5;
+      const length = Math.hypot(dx, dy);
+
+      if (length < 8) {
+        return;
+      }
+
+      const angle = Math.atan2(dy, dx);
+      const arrowSize = 14;
+
+      context.save();
+      context.lineWidth = 4;
+      context.strokeStyle = "rgba(140, 198, 255, 0.9)";
+      context.fillStyle = "rgba(140, 198, 255, 0.9)";
+      context.setLineDash([12, 8]);
+      context.beginPath();
+      context.moveTo(launch.start.x, launch.start.y);
+      context.lineTo(launch.start.x + dx, launch.start.y + dy);
+      context.stroke();
+      context.setLineDash([]);
+      context.beginPath();
+      context.moveTo(launch.start.x + dx, launch.start.y + dy);
+      context.lineTo(
+        launch.start.x + dx - Math.cos(angle - Math.PI / 6) * arrowSize,
+        launch.start.y + dy - Math.sin(angle - Math.PI / 6) * arrowSize
+      );
+      context.lineTo(
+        launch.start.x + dx - Math.cos(angle + Math.PI / 6) * arrowSize,
+        launch.start.y + dy - Math.sin(angle + Math.PI / 6) * arrowSize
+      );
+      context.closePath();
+      context.fill();
+      context.restore();
+    }
+
+    function releaseLaunch() {
+      if (!launch) {
+        return;
+      }
+
+      const dx = launch.current.x - launch.start.x;
+      const dy = launch.current.y - launch.start.y;
+      const forceScale = 0.035;
+      const maxSpeed = 18;
+      const velocity = {
+        x: dx * forceScale,
+        y: dy * forceScale
+      };
+      const speed = Math.hypot(velocity.x, velocity.y);
+
+      if (speed > maxSpeed) {
+        velocity.x = (velocity.x / speed) * maxSpeed;
+        velocity.y = (velocity.y / speed) * maxSpeed;
+      }
+
+      if (speed < 0.35) {
+        velocity.y = 0.8;
+      }
+
+      World.remove(world, launch.body);
+
+      const body = createObject(launch.start.x, launch.start.y);
+      Sleeping.set(body, false);
+      Body.setVelocity(body, velocity);
+      Body.setAngularVelocity(body, dx * 0.002);
+
+      launch = null;
+      updateStatus();
+      canvas.style.cursor = "crosshair";
+    }
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      render.canvas.width = width;
+      render.canvas.height = height;
+      render.options.width = width;
+      render.options.height = height;
+      render.bounds.max.x = width;
+      render.bounds.max.y = height;
+      makeBounds();
+    }
+
+    function setup() {
+      engine.gravity.y = Number(gravityInput.value);
+
+      render = Render.create({
+        canvas,
+        engine,
+        options: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          background: "#111517",
+          wireframes: false,
+          pixelRatio: window.devicePixelRatio || 1
+        }
+      });
+
+      makeBounds();
+
+      Events.on(render, "afterRender", drawLaunchVector);
+
+      Render.run(render);
+      Runner.run(runner, engine);
+      updateStatus();
+    }
+
+    gravityInput.addEventListener("input", () => {
+      engine.gravity.y = Number(gravityInput.value);
+    });
+
+    clearButton.addEventListener("click", () => {
+      const dynamicBodies = Composite.allBodies(world).filter((body) => !body.isStatic);
+      if (launch) {
+        World.remove(world, launch.body);
+        launch = null;
+      }
+      World.remove(world, dynamicBodies);
+      updateStatus();
+    });
+
+    canvas.addEventListener("pointerdown", (event) => {
+      if (event.target !== canvas || event.button !== 0 || launch) {
+        return;
+      }
+
+      const point = { x: event.clientX, y: event.clientY };
+      const body = createObject(point.x, point.y, true);
+
+      launch = {
+        body,
+        start: point,
+        current: { ...point }
+      };
+
+      canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = "grabbing";
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!launch) {
+        return;
+      }
+
+      launch.current = { x: event.clientX, y: event.clientY };
+    });
+
+    canvas.addEventListener("pointerup", (event) => {
+      if (!launch) {
+        return;
+      }
+
+      launch.current = { x: event.clientX, y: event.clientY };
+      releaseLaunch();
+    });
+
+    canvas.addEventListener("pointercancel", () => {
+      if (!launch) {
+        return;
+      }
+
+      World.remove(world, launch.body);
+      launch = null;
+      updateStatus();
+      canvas.style.cursor = "crosshair";
+    });
+
+    Events.on(engine, "afterUpdate", () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const escapedBodies = Composite.allBodies(world)
+        .filter((body) => !body.isStatic && (body.position.y > height + 240 || body.position.x < -240 || body.position.x > width + 240));
+
+      if (escapedBodies.length) {
+        World.remove(world, escapedBodies);
+        updateStatus();
+      }
+    });
+
+    window.addEventListener("resize", resize);
+    setup();
+    renderObjectPicker();
+    }
+  </script>
+</body>
+</html>
