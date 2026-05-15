@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Daily List</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: #1f2937;
+      background: #f3f4f6;
+    }
+
+    .site-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 2rem;
+      background: #111827;
+      color: #fff;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .nav a:hover,
+    .nav a:focus {
+      text-decoration: underline;
+    }
+
+    main {
+      width: min(92%, 720px);
+      margin: 2rem auto;
+      padding: 1.5rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.75rem;
+    }
+
+    form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    label {
+      display: grid;
+      gap: 0.4rem;
+      font-weight: 700;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    button {
+      justify-self: start;
+      padding: 0.75rem 1rem;
+      border: 0;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus {
+      background: #1d4ed8;
+    }
+
+    .message {
+      min-height: 1.5rem;
+      font-weight: 700;
+    }
+
+    .message.success {
+      color: #047857;
+    }
+
+    .message.error {
+      color: #b91c1c;
+    }
+
+    @media (max-width: 600px) {
+      .site-header {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 1rem;
+      }
+
+      .nav {
+        justify-content: center;
+        gap: 0.75rem;
+      }
+
+      main {
+        margin: 1rem auto;
+        padding: 1rem;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">Task Daily List</div>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#">Home</a>
+      <a href="#">Tasks</a>
+      <a href="#">Calendar</a>
+      <a href="#">Profile</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Contact Form</h1>
+    <form id="contactForm" novalidate>
+      <label>
+        Name
+        <input type="text" name="name" placeholder="Your name">
+      </label>
+
+      <label>
+        Email
+        <input type="email" name="email" placeholder="you@example.com">
+      </label>
+
+      <label>
+        Message
+        <textarea name="message" placeholder="Write your message"></textarea>
+      </label>
+
+      <button type="submit">Submit</button>
+      <p id="formMessage" class="message" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
