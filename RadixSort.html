@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Radix Sort</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      --ink: #172026;
+      --muted: #5d6972;
+      --page: #edf3f5;
+      --panel: #ffffff;
+      --line: #ccd6dd;
+      --accent: #1261a6;
+      --accent-2: #d46f22;
+      --good: #18794e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.05rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .simulator,
+    .explain {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(18, 97, 166, 0.14);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button:disabled {
+      border-color: var(--line);
+      background: #dce5ea;
+      color: #66727a;
+      cursor: not-allowed;
+    }
+
+    .stage {
+      display: grid;
+      gap: 18px;
+      min-height: 430px;
+      padding: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #f9fbfc;
+      overflow-x: auto;
+    }
+
+    .row-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .array-row,
+    .output-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 58px;
+      min-width: max-content;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .item {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-width: 58px;
+      height: 44px;
+      padding: 0 10px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 800;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, opacity 180ms ease;
+    }
+
+    .item.current {
+      border-color: var(--accent-2);
+      background: #fff1df;
+      transform: translateY(-6px);
+    }
+
+    .item.done {
+      border-color: var(--good);
+      background: #dcf6e9;
+    }
+
+    .digit {
+      color: var(--accent-2);
+    }
+
+    .buckets {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 8px;
+      min-width: 640px;
+    }
+
+    .bucket {
+      min-height: 86px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .bucket.active {
+      border-color: var(--accent-2);
+      background: #fff8ef;
+    }
+
+    .bucket-title {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .bucket-items {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .bucket-item {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #e7f0fb;
+      color: var(--accent);
+      font-weight: 800;
+      animation: pop 180ms ease-out;
+    }
+
+    .message {
+      min-height: 28px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .explain {
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #172026;
+      color: #f7fbfd;
+      font-size: 0.9rem;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: scale(0.88);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .buckets {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>RadixSort</h1>
+      <p>Sort non-negative integers by processing digits from least significant to most significant.</p>
+    </header>
+
+    <div class="layout">
+      <section class="simulator">
+        <div class="inputs">
+          <label>
+            Numbers
+            <input id="numbers-input" value="170, 45, 75, 90, 802, 24, 2, 66" aria-label="Numbers to sort">
+          </label>
+        </div>
+
+        <div class="buttons">
+          <button id="run" type="button">Run Animation</button>
+          <button id="step" class="secondary" type="button">Step</button>
+          <button id="reset" class="secondary" type="button">Reset</button>
+        </div>
+
+        <div class="stage">
+          <div>
+            <div class="row-title">
+              <span>Current Array</span>
+              <span id="pass-label">digit place: ones</span>
+            </div>
+            <div id="array-row" class="array-row" aria-label="Current array"></div>
+          </div>
+
+          <div>
+            <div class="row-title">
+              <span>Buckets 0-9</span>
+              <span id="scan-label">scan index: 0</span>
+            </div>
+            <div id="buckets" class="buckets" aria-label="Radix buckets"></div>
+          </div>
+
+          <div>
+            <div class="row-title">
+              <span>Output After Pass</span>
+              <span id="output-label">collect buckets in order</span>
+            </div>
+            <div id="output-row" class="output-row" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div id="message" class="message" aria-live="polite"></div>
+      </section>
+
+      <aside class="explain">
+        <div class="explain-block">
+          <h2>Approach</h2>
+          <ol>
+            <li>Find the largest number to know how many digit passes are needed.</li>
+            <li>Start with the ones digit, then tens, hundreds, and so on.</li>
+            <li>For each pass, place every number into bucket <code>0</code> through <code>9</code> based on that digit.</li>
+            <li>Collect buckets from <code>0</code> to <code>9</code> to form the array for the next pass.</li>
+            <li>After the final digit pass, the array is sorted.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block">
+          <h2>Why It Works</h2>
+          <p>Radix sort uses a stable bucket step. Earlier digit order is preserved inside each bucket while later digit places organize the larger groups.</p>
+        </div>
+
+        <div class="explain-block">
+          <h2>Pseudocode</h2>
+          <pre><code>RadixSort(A):
+  max = largest value in A
+  place = 1
+
+  while max / place > 0:
+    create buckets 0..9
+
+    for each value in A:
+      digit = (value / place) % 10
+      append value to bucket[digit]
+
+    A = collect buckets 0..9
+    place = place * 10
+
+  return A</code></pre>
+        </div>
+
+        <div class="explain-block">
+          <h2>Running Time</h2>
+          <p>If <code>n</code> is the number of values, <code>d</code> is the number of digit places, and base is <code>10</code>, running time is <code>O(d(n + 10))</code>, usually written as <code>O(dn)</code>. Extra space is <code>O(n + 10)</code> for buckets.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const numbersInput = document.querySelector("#numbers-input");
+    const arrayRow = document.querySelector("#array-row");
+    const bucketsElement = document.querySelector("#buckets");
+    const outputRow = document.querySelector("#output-row");
+    const message = document.querySelector("#message");
+    const passLabel = document.querySelector("#pass-label");
+    const scanLabel = document.querySelector("#scan-label");
+    const outputLabel = document.querySelector("#output-label");
+    const runButton = document.querySelector("#run");
+    const stepButton = document.querySelector("#step");
+    const resetButton = document.querySelector("#reset");
+
+    const placeNames = ["ones", "tens", "hundreds", "thousands", "ten-thousands"];
+    let numbers = [];
+    let buckets = [];
+    let output = [];
+    let place = 1;
+    let pass = 0;
+    let index = 0;
+    let phase = "scatter";
+    let done = false;
+    let timer = null;
+
+    function parseNumbers(text) {
+      return text
+        .split(",")
+        .map((value) => Number(value.trim()))
+        .filter((value) => Number.isInteger(value) && value >= 0);
+    }
+
+    function maxDigits(values) {
+      const max = Math.max(0, ...values);
+      return String(max).length;
+    }
+
+    function digitAt(value, digitPlace) {
+      return Math.floor(value / digitPlace) % 10;
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+
+      runButton.disabled = false;
+    }
+
+    function renderArray() {
+      arrayRow.innerHTML = "";
+
+      numbers.forEach((value, valueIndex) => {
+        const item = document.createElement("span");
+        item.className = "item";
+        item.classList.toggle("current", phase === "scatter" && valueIndex === index && !done);
+        item.classList.toggle("done", done);
+        const valueText = String(value);
+        const targetDigit = digitAt(value, place);
+        item.innerHTML = valueText.replace(String(targetDigit), `<span class="digit">${targetDigit}</span>`);
+        arrayRow.append(item);
+      });
+    }
+
+    function renderBuckets() {
+      bucketsElement.innerHTML = "";
+
+      for (let bucketIndex = 0; bucketIndex < 10; bucketIndex += 1) {
+        const bucket = document.createElement("div");
+        const title = document.createElement("div");
+        const items = document.createElement("div");
+
+        bucket.className = "bucket";
+        bucket.classList.toggle("active", phase === "scatter" && index < numbers.length && digitAt(numbers[index], place) === bucketIndex);
+        title.className = "bucket-title";
+        title.textContent = `bucket ${bucketIndex}`;
+        items.className = "bucket-items";
+
+        buckets[bucketIndex].forEach((value) => {
+          const item = document.createElement("span");
+          item.className = "bucket-item";
+          item.textContent = value;
+          items.append(item);
+        });
+
+        bucket.append(title, items);
+        bucketsElement.append(bucket);
+      }
+    }
+
+    function renderOutput() {
+      outputRow.innerHTML = "";
+
+      output.forEach((value) => {
+        const item = document.createElement("span");
+        item.className = "item done";
+        item.textContent = value;
+        outputRow.append(item);
+      });
+    }
+
+    function render() {
+      renderArray();
+      renderBuckets();
+      renderOutput();
+      passLabel.textContent = `digit place: ${placeNames[pass] || place}`;
+      scanLabel.textContent = phase === "scatter" ? `scan index: ${Math.min(index + 1, numbers.length)}` : "collect buckets";
+      outputLabel.textContent = done ? "sorted" : "collect buckets in order";
+    }
+
+    function reset() {
+      stop();
+      numbers = parseNumbers(numbersInput.value);
+      buckets = Array.from({ length: 10 }, () => []);
+      output = [];
+      place = 1;
+      pass = 0;
+      index = 0;
+      phase = "scatter";
+      done = numbers.length <= 1;
+      message.textContent = numbers.length
+        ? "Ready: start by sorting on the ones digit."
+        : "Enter non-negative integers separated by commas.";
+      render();
+    }
+
+    function collectBuckets() {
+      output = buckets.flat();
+      numbers = [...output];
+      buckets = Array.from({ length: 10 }, () => []);
+      index = 0;
+      pass += 1;
+      place *= 10;
+
+      if (pass >= maxDigits(numbers)) {
+        done = true;
+        message.textContent = "Done. All digit places have been processed.";
+      } else {
+        phase = "scatter";
+        output = [];
+        message.textContent = `Start next pass using the ${placeNames[pass] || place} digit.`;
+      }
+    }
+
+    function step() {
+      if (done) {
+        stop();
+        return false;
+      }
+
+      if (!numbers.length) {
+        reset();
+        return false;
+      }
+
+      if (phase === "scatter") {
+        if (index < numbers.length) {
+          const value = numbers[index];
+          const digit = digitAt(value, place);
+          buckets[digit].push(value);
+          message.textContent = `${value} has digit ${digit}, so put it in bucket ${digit}.`;
+          index += 1;
+        }
+
+        if (index >= numbers.length) {
+          phase = "collect";
+          message.textContent = "All values are in buckets. Collect buckets from 0 to 9.";
+        }
+      } else {
+        collectBuckets();
+      }
+
+      render();
+      return !done;
+    }
+
+    runButton.addEventListener("click", () => {
+      reset();
+      runButton.disabled = true;
+      timer = setInterval(() => {
+        if (!step()) {
+          stop();
+        }
+      }, 760);
+    });
+
+    stepButton.addEventListener("click", () => {
+      if (timer) {
+        stop();
+      }
+      step();
+    });
+
+    resetButton.addEventListener("click", reset);
+    numbersInput.addEventListener("change", reset);
+
+    reset();
+  </script>
+</body>
+</html>

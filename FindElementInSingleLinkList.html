@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find Element In Single Link List</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      --ink: #172026;
+      --muted: #5d6972;
+      --page: #edf3f5;
+      --panel: #ffffff;
+      --line: #ccd6dd;
+      --accent: #1261a6;
+      --accent-2: #d46f22;
+      --good: #18794e;
+      --bad: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.05rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .simulator,
+    .explain {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .tabs,
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button.active {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+      color: #fff;
+    }
+
+    button:disabled {
+      border-color: var(--line);
+      background: #dce5ea;
+      color: #66727a;
+      cursor: not-allowed;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(18, 97, 166, 0.14);
+    }
+
+    .stage {
+      display: grid;
+      gap: 18px;
+      min-height: 340px;
+      padding: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #f9fbfc;
+      overflow-x: auto;
+    }
+
+    .row-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: max-content;
+      min-height: 90px;
+      padding: 16px 6px;
+    }
+
+    .node {
+      position: relative;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 58px;
+      height: 48px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 800;
+      transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, opacity 180ms ease;
+    }
+
+    .node::after {
+      content: attr(data-index);
+      position: absolute;
+      bottom: -24px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .node.current {
+      border-color: var(--accent-2);
+      background: #fff1df;
+      transform: translateY(-8px);
+    }
+
+    .node.checked {
+      opacity: 0.5;
+    }
+
+    .node.found {
+      border-color: var(--good);
+      background: #dcf6e9;
+      transform: translateY(-8px);
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .stack {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 52px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .frame {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #e7f0fb;
+      color: var(--accent);
+      font-weight: 800;
+      animation: pop 180ms ease-out;
+    }
+
+    .result {
+      min-height: 50px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .result.good {
+      color: var(--good);
+    }
+
+    .result.bad {
+      color: var(--bad);
+    }
+
+    .message {
+      min-height: 28px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .explain {
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #172026;
+      color: #f7fbfd;
+      font-size: 0.9rem;
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: scale(0.88);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .layout,
+      .inputs {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>FindElementInSingleLinkList</h1>
+      <p>Search for a target value in a singly linked list with iterative and recursive procedures.</p>
+    </header>
+
+    <div class="layout">
+      <section class="simulator">
+        <div class="tabs" aria-label="Cases">
+          <button class="active" type="button" data-mode="iterative">Case 1: No Recursive</button>
+          <button class="secondary" type="button" data-mode="recursive">Case 2: Recursive</button>
+        </div>
+
+        <div class="inputs">
+          <label>
+            Single linked list
+            <input id="list-input" value="4, 8, 15, 16, 23, 42" aria-label="Single linked list">
+          </label>
+          <label>
+            Find value
+            <input id="target-input" value="23" aria-label="Find value">
+          </label>
+        </div>
+
+        <div class="buttons">
+          <button id="run" type="button">Run Animation</button>
+          <button id="step" class="secondary" type="button">Step</button>
+          <button id="reset" class="secondary" type="button">Reset</button>
+        </div>
+
+        <div class="stage">
+          <div>
+            <div class="row-title">
+              <span>L</span>
+              <span id="scan-label">current: head</span>
+            </div>
+            <div id="list-row" class="list-row" aria-label="Single linked list animation"></div>
+          </div>
+
+          <div>
+            <div class="row-title">
+              <span id="stack-title">Call stack</span>
+              <span id="step-label">step 0</span>
+            </div>
+            <div id="stack-row" class="stack" aria-live="polite"></div>
+          </div>
+
+          <div id="result" class="result" aria-live="polite">Result will appear here.</div>
+        </div>
+
+        <div id="message" class="message" aria-live="polite"></div>
+      </section>
+
+      <aside class="explain">
+        <div class="explain-block" id="iterative-explain">
+          <h2>Case 1 Approach: No Recursive</h2>
+          <ol>
+            <li>Start with a pointer at the head of the list.</li>
+            <li>Compare the current node value with the target.</li>
+            <li>If it matches, return that node.</li>
+            <li>If it does not match, move the pointer to <code>current.next</code>.</li>
+            <li>If the pointer becomes <code>null</code>, the value is not in the list.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block" id="recursive-explain" hidden>
+          <h2>Case 2 Approach: Recursive</h2>
+          <ol>
+            <li>Call the function with the head node.</li>
+            <li>If the node is <code>null</code>, stop and return not found.</li>
+            <li>If the node value equals the target, stop and return that node.</li>
+            <li>Otherwise call the same function on <code>node.next</code>.</li>
+            <li>Each call waits for the next call to return.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block">
+          <h2>Pseudocode</h2>
+          <pre id="code-block"><code></code></pre>
+        </div>
+
+        <div class="explain-block">
+          <h2>Running Time Compare</h2>
+          <p>Both procedures check at most every node once, so both are <code>O(N)</code> time. Iterative search uses <code>O(1)</code> extra space. Recursive search uses <code>O(N)</code> call-stack space in the worst case.</p>
+        </div>
+
+        <div class="explain-block">
+          <h2>When Does Recursion Terminate?</h2>
+          <p>Recursive search terminates when it finds the target or reaches <code>null</code> after the last node. For a list with <code>N</code> nodes, it makes at most <code>N + 1</code> calls. In real browsers, very large lists can overflow the call stack; the safe size depends on the JavaScript engine, but thousands to tens of thousands of recursive calls can be risky. Iteration is safer for very large lists.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const listInput = document.querySelector("#list-input");
+    const targetInput = document.querySelector("#target-input");
+    const listRow = document.querySelector("#list-row");
+    const stackRow = document.querySelector("#stack-row");
+    const resultBox = document.querySelector("#result");
+    const message = document.querySelector("#message");
+    const scanLabel = document.querySelector("#scan-label");
+    const stepLabel = document.querySelector("#step-label");
+    const stackTitle = document.querySelector("#stack-title");
+    const runButton = document.querySelector("#run");
+    const stepButton = document.querySelector("#step");
+    const resetButton = document.querySelector("#reset");
+    const tabs = [...document.querySelectorAll("[data-mode]")];
+    const iterativeExplain = document.querySelector("#iterative-explain");
+    const recursiveExplain = document.querySelector("#recursive-explain");
+    const codeBlock = document.querySelector("#code-block code");
+
+    const code = {
+      iterative: `Find(head, target):
+  current = head
+
+  while current != null:
+    if current.value == target:
+      return current
+    current = current.next
+
+  return null`,
+      recursive: `FindRecursive(node, target):
+  if node == null:
+    return null
+
+  if node.value == target:
+    return node
+
+  return FindRecursive(node.next, target)`
+    };
+
+    let mode = "iterative";
+    let values = [];
+    let target = "";
+    let index = 0;
+    let frames = [];
+    let done = false;
+    let foundIndex = -1;
+    let timer = null;
+
+    function parseList(text) {
+      return text.split(",").map((value) => value.trim()).filter(Boolean);
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+
+      runButton.disabled = false;
+    }
+
+    function renderList() {
+      listRow.innerHTML = "";
+
+      values.forEach((value, valueIndex) => {
+        const node = document.createElement("div");
+        node.className = "node";
+        node.dataset.index = valueIndex + 1;
+        node.textContent = value;
+
+        if (valueIndex === foundIndex) {
+          node.classList.add("found");
+        } else if (!done && valueIndex === index && index < values.length) {
+          node.classList.add("current");
+        } else if (valueIndex < index || done) {
+          node.classList.add("checked");
+        }
+
+        listRow.append(node);
+
+        if (valueIndex < values.length - 1) {
+          const arrow = document.createElement("span");
+          arrow.className = "arrow";
+          arrow.textContent = "->";
+          listRow.append(arrow);
+        }
+      });
+    }
+
+    function renderStack() {
+      stackRow.innerHTML = "";
+
+      if (mode === "iterative") {
+        const frame = document.createElement("span");
+        frame.className = "frame";
+        frame.textContent = index < values.length && !done ? `current = node ${index + 1}` : "current = null";
+        stackRow.append(frame);
+        return;
+      }
+
+      frames.forEach((frameText) => {
+        const frame = document.createElement("span");
+        frame.className = "frame";
+        frame.textContent = frameText;
+        stackRow.append(frame);
+      });
+    }
+
+    function render() {
+      renderList();
+      renderStack();
+      scanLabel.textContent = index < values.length && !done ? `current: node ${index + 1}` : "current: null";
+      stepLabel.textContent = `step ${Math.min(index + 1, values.length + 1)}`;
+      stackTitle.textContent = mode === "iterative" ? "Pointer state" : "Call stack";
+      iterativeExplain.hidden = mode !== "iterative";
+      recursiveExplain.hidden = mode !== "recursive";
+      codeBlock.textContent = code[mode];
+      tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.mode === mode));
+    }
+
+    function reset() {
+      stop();
+      values = parseList(listInput.value);
+      target = targetInput.value.trim();
+      index = 0;
+      frames = mode === "recursive" && values.length ? ["Find(node 1)"] : [];
+      done = false;
+      foundIndex = -1;
+      resultBox.className = "result";
+      resultBox.textContent = "Result will appear here.";
+      message.textContent = mode === "iterative"
+        ? "Ready to move current from head to next nodes."
+        : "Ready to create recursive calls until found or null.";
+      render();
+    }
+
+    function finishFound() {
+      done = true;
+      foundIndex = index;
+      resultBox.className = "result good";
+      resultBox.textContent = `Found ${target} at node ${index + 1}.`;
+      message.textContent = "Stop: current node value matches the target.";
+      stop();
+    }
+
+    function finishNotFound() {
+      done = true;
+      resultBox.className = "result bad";
+      resultBox.textContent = `${target} was not found.`;
+      message.textContent = "Stop: reached null after the last node.";
+      stop();
+    }
+
+    function step() {
+      if (done) {
+        return false;
+      }
+
+      if (!values.length || !target) {
+        reset();
+        return false;
+      }
+
+      if (index >= values.length) {
+        if (mode === "recursive") {
+          frames.push("Find(null)");
+        }
+        finishNotFound();
+        render();
+        return false;
+      }
+
+      if (values[index] === target) {
+        finishFound();
+        render();
+        return false;
+      }
+
+      message.textContent = `${values[index]} does not equal ${target}. Move to next node.`;
+      index += 1;
+
+      if (mode === "recursive" && index < values.length) {
+        frames.push(`Find(node ${index + 1})`);
+      }
+
+      render();
+      return true;
+    }
+
+    runButton.addEventListener("click", () => {
+      reset();
+      runButton.disabled = true;
+      timer = setInterval(() => {
+        if (!step()) {
+          stop();
+        }
+      }, 850);
+    });
+
+    stepButton.addEventListener("click", () => {
+      if (timer) {
+        stop();
+      }
+      step();
+    });
+
+    resetButton.addEventListener("click", reset);
+    listInput.addEventListener("change", reset);
+    targetInput.addEventListener("change", reset);
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        mode = tab.dataset.mode;
+        reset();
+      });
+    });
+
+    reset();
+  </script>
+</body>
+</html>

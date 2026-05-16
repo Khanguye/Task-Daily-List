@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Three Stacks In One Array</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      --ink: #172026;
+      --muted: #5d6972;
+      --page: #edf3f5;
+      --panel: #ffffff;
+      --line: #ccd6dd;
+      --accent: #1261a6;
+      --accent-2: #d46f22;
+      --accent-3: #18794e;
+      --bad: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.05rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .simulator,
+    .explain {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 140px 1fr 150px;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(18, 97, 166, 0.14);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button.warn {
+      border-color: var(--bad);
+      background: #fff;
+      color: var(--bad);
+    }
+
+    .stage {
+      display: grid;
+      gap: 18px;
+      min-height: 420px;
+      padding: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #f9fbfc;
+      overflow-x: auto;
+    }
+
+    .row-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .array {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(62px, 1fr));
+      gap: 8px;
+      min-width: 760px;
+    }
+
+    .slot {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 58px;
+      padding: 8px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 800;
+      transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+    }
+
+    .slot::after {
+      content: attr(data-index);
+      position: absolute;
+      bottom: -22px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .slot.s1 {
+      border-color: var(--accent);
+      background: #e7f0fb;
+      color: var(--accent);
+    }
+
+    .slot.s2 {
+      border-color: var(--accent-2);
+      background: #fff1df;
+      color: var(--accent-2);
+    }
+
+    .slot.s3 {
+      border-color: var(--accent-3);
+      background: #dcf6e9;
+      color: var(--accent-3);
+    }
+
+    .slot.top {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 18px rgba(23, 32, 38, 0.14);
+    }
+
+    .stack-state {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stack-card {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .stack-card strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stack-card span {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .message {
+      min-height: 28px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .message.good {
+      color: var(--accent-3);
+    }
+
+    .message.bad {
+      color: var(--bad);
+    }
+
+    .explain {
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    ol,
+    ul {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #172026;
+      color: #f7fbfd;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout,
+      .controls,
+      .stack-state {
+        grid-template-columns: 1fr;
+      }
+
+      .array {
+        grid-template-columns: repeat(6, minmax(58px, 1fr));
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ThreeStacksOneArray</h1>
+      <p>Implement three independent stacks inside one fixed-size array by dividing the array into three regions.</p>
+    </header>
+
+    <div class="layout">
+      <section class="simulator">
+        <div class="controls">
+          <label>
+            Stack
+            <select id="stack-select" aria-label="Stack number">
+              <option value="0">Stack 1</option>
+              <option value="1">Stack 2</option>
+              <option value="2">Stack 3</option>
+            </select>
+          </label>
+          <label>
+            Value
+            <input id="value-input" value="A" aria-label="Value">
+          </label>
+          <label>
+            Array Size
+            <input id="size-input" type="number" min="3" max="18" value="12" aria-label="Array size">
+          </label>
+        </div>
+
+        <div class="buttons">
+          <button id="push" type="button">Push</button>
+          <button id="pop" class="secondary" type="button">Pop</button>
+          <button id="peek" class="secondary" type="button">Peek</button>
+          <button id="reset" class="warn" type="button">Reset</button>
+        </div>
+
+        <div class="stage">
+          <div>
+            <div class="row-title">
+              <span>One Array</span>
+              <span id="array-label">12 slots split into 3 parts</span>
+            </div>
+            <div id="array" class="array" aria-label="Shared array"></div>
+          </div>
+
+          <div>
+            <div class="row-title">
+              <span>Stack Tops</span>
+              <span>top index per stack</span>
+            </div>
+            <div id="stack-state" class="stack-state"></div>
+          </div>
+        </div>
+
+        <div id="message" class="message" aria-live="polite">Ready.</div>
+      </section>
+
+      <aside class="explain">
+        <div class="explain-block">
+          <h2>Approach</h2>
+          <ol>
+            <li>Create one array of size <code>N</code>.</li>
+            <li>Divide it into three fixed regions, one region per stack.</li>
+            <li>Keep a separate <code>top</code> index for each stack.</li>
+            <li>For <code>push</code>, move that stack's top forward and write the value.</li>
+            <li>For <code>pop</code>, read the top value, clear that slot, and move top backward.</li>
+            <li>Overflow happens when a stack's top reaches the end of its own region.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block">
+          <h2>Mapping Formula</h2>
+          <p>For stack <code>s</code>, its region starts at <code>s * capacity</code>. The stack can use indexes from <code>start</code> to <code>start + capacity - 1</code>.</p>
+        </div>
+
+        <div class="explain-block">
+          <h2>Pseudocode</h2>
+          <pre><code>array = new Array(N)
+capacity = floor(N / 3)
+top[0] = -1
+top[1] = -1
+top[2] = -1
+
+indexOf(stack, offset):
+  return stack * capacity + offset
+
+push(stack, value):
+  if top[stack] == capacity - 1:
+    error overflow
+  top[stack]++
+  array[indexOf(stack, top[stack])] = value
+
+pop(stack):
+  if top[stack] == -1:
+    error underflow
+  index = indexOf(stack, top[stack])
+  value = array[index]
+  array[index] = empty
+  top[stack]--
+  return value</code></pre>
+        </div>
+
+        <div class="explain-block">
+          <h2>Running Time</h2>
+          <p><code>push</code>, <code>pop</code>, and <code>peek</code> are all <code>O(1)</code>. The array uses <code>O(N)</code> space. This fixed-region method is simple, but unused space in one stack cannot be shared with another stack.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const stackSelect = document.querySelector("#stack-select");
+    const valueInput = document.querySelector("#value-input");
+    const sizeInput = document.querySelector("#size-input");
+    const arrayElement = document.querySelector("#array");
+    const stackState = document.querySelector("#stack-state");
+    const arrayLabel = document.querySelector("#array-label");
+    const message = document.querySelector("#message");
+    const pushButton = document.querySelector("#push");
+    const popButton = document.querySelector("#pop");
+    const peekButton = document.querySelector("#peek");
+    const resetButton = document.querySelector("#reset");
+
+    let array = [];
+    let tops = [-1, -1, -1];
+    let capacity = 4;
+
+    function totalSize() {
+      return Math.max(3, Number(sizeInput.value) || 12);
+    }
+
+    function stackClass(stack) {
+      return `s${stack + 1}`;
+    }
+
+    function regionStart(stack) {
+      return stack * capacity;
+    }
+
+    function regionEnd(stack) {
+      return regionStart(stack) + capacity - 1;
+    }
+
+    function indexOf(stack, offset) {
+      return regionStart(stack) + offset;
+    }
+
+    function stackForIndex(index) {
+      return Math.min(2, Math.floor(index / capacity));
+    }
+
+    function setMessage(text, type = "") {
+      message.className = `message ${type}`;
+      message.textContent = text;
+    }
+
+    function renderArray() {
+      arrayElement.innerHTML = "";
+
+      array.forEach((value, index) => {
+        const stack = stackForIndex(index);
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.dataset.index = index;
+
+        if (value !== null) {
+          slot.classList.add(stackClass(stack));
+          slot.textContent = value;
+        } else {
+          slot.textContent = "-";
+        }
+
+        if (index === indexOf(stack, tops[stack])) {
+          slot.classList.add("top");
+        }
+
+        arrayElement.append(slot);
+      });
+    }
+
+    function renderState() {
+      stackState.innerHTML = "";
+
+      for (let stack = 0; stack < 3; stack += 1) {
+        const card = document.createElement("div");
+        const title = document.createElement("strong");
+        const detail = document.createElement("span");
+
+        card.className = "stack-card";
+        title.textContent = `Stack ${stack + 1}`;
+        detail.textContent = `region ${regionStart(stack)}-${regionEnd(stack)}, top = ${tops[stack]}`;
+        card.append(title, detail);
+        stackState.append(card);
+      }
+
+      arrayLabel.textContent = `${array.length} slots, capacity ${capacity} per stack`;
+    }
+
+    function render() {
+      renderArray();
+      renderState();
+    }
+
+    function reset() {
+      const usableSize = Math.floor(totalSize() / 3) * 3;
+      sizeInput.value = usableSize;
+      capacity = usableSize / 3;
+      array = Array.from({ length: usableSize }, () => null);
+      tops = [-1, -1, -1];
+      setMessage("Ready. The array is split into three fixed stack regions.");
+      render();
+    }
+
+    function nextValue(value) {
+      if (/^[A-Z]$/i.test(value)) {
+        const code = value.toUpperCase().charCodeAt(0);
+        return String.fromCharCode(code >= 90 ? 65 : code + 1);
+      }
+
+      if (/^\d+$/.test(value)) {
+        return String(Number(value) + 1);
+      }
+
+      return value;
+    }
+
+    function selectedStack() {
+      return Number(stackSelect.value);
+    }
+
+    function push() {
+      const stack = selectedStack();
+      const value = valueInput.value.trim();
+
+      if (!value) {
+        setMessage("Enter a value before push.", "bad");
+        return;
+      }
+
+      if (tops[stack] >= capacity - 1) {
+        setMessage(`Overflow: Stack ${stack + 1} has no free slots in its region.`, "bad");
+        return;
+      }
+
+      tops[stack] += 1;
+      array[indexOf(stack, tops[stack])] = value;
+      setMessage(`push(${value}) into Stack ${stack + 1}.`, "good");
+      valueInput.value = nextValue(value);
+      render();
+    }
+
+    function pop() {
+      const stack = selectedStack();
+
+      if (tops[stack] < 0) {
+        setMessage(`Underflow: Stack ${stack + 1} is empty.`, "bad");
+        return;
+      }
+
+      const index = indexOf(stack, tops[stack]);
+      const value = array[index];
+      array[index] = null;
+      tops[stack] -= 1;
+      setMessage(`pop() from Stack ${stack + 1} returns ${value}.`, "good");
+      render();
+    }
+
+    function peek() {
+      const stack = selectedStack();
+
+      if (tops[stack] < 0) {
+        setMessage(`peek() returns null because Stack ${stack + 1} is empty.`, "bad");
+        return;
+      }
+
+      const value = array[indexOf(stack, tops[stack])];
+      setMessage(`peek() on Stack ${stack + 1} returns ${value}.`, "good");
+    }
+
+    pushButton.addEventListener("click", push);
+    popButton.addEventListener("click", pop);
+    peekButton.addEventListener("click", peek);
+    resetButton.addEventListener("click", reset);
+    sizeInput.addEventListener("change", reset);
+    valueInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        push();
+      }
+    });
+
+    reset();
+  </script>
+</body>
+</html>

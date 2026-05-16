@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reverse Singly Linked List</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      --ink: #172026;
+      --muted: #5d6972;
+      --page: #edf3f5;
+      --panel: #ffffff;
+      --line: #ccd6dd;
+      --accent: #1261a6;
+      --accent-2: #d46f22;
+      --good: #18794e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.05rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .simulator,
+    .explain {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .tabs,
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button.active {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+      color: #fff;
+    }
+
+    button:disabled {
+      border-color: var(--line);
+      background: #dce5ea;
+      color: #66727a;
+      cursor: not-allowed;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(18, 97, 166, 0.14);
+    }
+
+    .stage {
+      display: grid;
+      gap: 18px;
+      min-height: 360px;
+      padding: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #f9fbfc;
+      overflow-x: auto;
+    }
+
+    .row-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: max-content;
+      min-height: 92px;
+      padding: 18px 6px;
+    }
+
+    .node {
+      position: relative;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 60px;
+      height: 48px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 800;
+      transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, opacity 180ms ease;
+    }
+
+    .node::after {
+      content: attr(data-label);
+      position: absolute;
+      bottom: -24px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .node.prev {
+      border-color: var(--good);
+      background: #dcf6e9;
+    }
+
+    .node.curr {
+      border-color: var(--accent-2);
+      background: #fff1df;
+      transform: translateY(-8px);
+    }
+
+    .node.next {
+      border-color: var(--accent);
+      background: #e7f0fb;
+    }
+
+    .node.done {
+      border-color: var(--good);
+      background: #dcf6e9;
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .pointer-board {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 58px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .pointer {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #eef4f7;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .pointer.prev {
+      background: #dcf6e9;
+      color: var(--good);
+    }
+
+    .pointer.curr {
+      background: #fff1df;
+      color: var(--accent-2);
+    }
+
+    .pointer.next {
+      background: #e7f0fb;
+      color: var(--accent);
+    }
+
+    .message {
+      min-height: 28px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .explain {
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--muted);
+    }
+
+    code {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #172026;
+      color: #f7fbfd;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ReverseSinglyLinkedList</h1>
+      <p>Reverse a singly linked list by changing links, not by copying values.</p>
+    </header>
+
+    <div class="layout">
+      <section class="simulator">
+        <div class="tabs" aria-label="Cases">
+          <button class="active" type="button" data-mode="standard">Case 1: Nonrecursive O(n)</button>
+          <button class="secondary" type="button" data-mode="constant">Case 2: O(n), Constant Extra Space</button>
+        </div>
+
+        <div class="inputs">
+          <label>
+            Singly linked list
+            <input id="list-input" value="A, B, C, D, E" aria-label="Singly linked list">
+          </label>
+        </div>
+
+        <div class="buttons">
+          <button id="run" type="button">Run Animation</button>
+          <button id="step" class="secondary" type="button">Step</button>
+          <button id="reset" class="secondary" type="button">Reset</button>
+        </div>
+
+        <div class="stage">
+          <div>
+            <div class="row-title">
+              <span id="list-title">Original list</span>
+              <span id="head-label">head = node 1</span>
+            </div>
+            <div id="list-row" class="list-row" aria-label="Singly linked list animation"></div>
+          </div>
+
+          <div>
+            <div class="row-title">
+              <span>Pointers</span>
+              <span id="step-label">step 0</span>
+            </div>
+            <div id="pointer-board" class="pointer-board" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div id="message" class="message" aria-live="polite"></div>
+      </section>
+
+      <aside class="explain">
+        <div class="explain-block" id="standard-explain">
+          <h2>Case 1 Approach: Nonrecursive Method</h2>
+          <ol>
+            <li>Set <code>prev = null</code> and <code>curr = head</code>.</li>
+            <li>Save <code>next = curr.next</code> before changing the link.</li>
+            <li>Reverse the current link with <code>curr.next = prev</code>.</li>
+            <li>Move <code>prev</code> to <code>curr</code>.</li>
+            <li>Move <code>curr</code> to <code>next</code>.</li>
+            <li>When <code>curr</code> becomes <code>null</code>, set <code>head = prev</code>.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block" id="constant-explain" hidden>
+          <h2>Case 2 Approach: Constant Extra Space</h2>
+          <ol>
+            <li>Use only three references: <code>prev</code>, <code>curr</code>, and <code>next</code>.</li>
+            <li>Do not create a second list or copy node data.</li>
+            <li>At each node, save the next link, reverse the current link, then advance the references.</li>
+            <li>The links are rewired in place until all nodes point backward.</li>
+            <li>The final <code>prev</code> is the new head.</li>
+          </ol>
+        </div>
+
+        <div class="explain-block">
+          <h2>Pseudocode</h2>
+          <pre id="code-block"><code></code></pre>
+        </div>
+
+        <div class="explain-block">
+          <h2>Running Time</h2>
+          <p>Both cases visit every node exactly once, so the running time is <code>O(n)</code>. The algorithm uses a constant number of references, so extra space is <code>O(1)</code>.</p>
+        </div>
+
+        <div class="explain-block">
+          <h2>Important Detail</h2>
+          <p>The node values do not move. The animation changes only the direction of each node's <code>next</code> link.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const listInput = document.querySelector("#list-input");
+    const listRow = document.querySelector("#list-row");
+    const pointerBoard = document.querySelector("#pointer-board");
+    const message = document.querySelector("#message");
+    const headLabel = document.querySelector("#head-label");
+    const stepLabel = document.querySelector("#step-label");
+    const listTitle = document.querySelector("#list-title");
+    const runButton = document.querySelector("#run");
+    const stepButton = document.querySelector("#step");
+    const resetButton = document.querySelector("#reset");
+    const tabs = [...document.querySelectorAll("[data-mode]")];
+    const standardExplain = document.querySelector("#standard-explain");
+    const constantExplain = document.querySelector("#constant-explain");
+    const codeBlock = document.querySelector("#code-block code");
+
+    const pseudocode = `Reverse(head):
+  prev = null
+  curr = head
+
+  while curr != null:
+    next = curr.next
+    curr.next = prev
+    prev = curr
+    curr = next
+
+  head = prev
+  return head`;
+
+    let mode = "standard";
+    let values = [];
+    let originalOrder = [];
+    let reversedOrder = [];
+    let curr = 0;
+    let prev = null;
+    let next = null;
+    let stepCount = 0;
+    let done = false;
+    let timer = null;
+
+    function parseValues(text) {
+      return text.split(",").map((value) => value.trim()).filter(Boolean);
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+
+      runButton.disabled = false;
+    }
+
+    function nodeLabel(index) {
+      return index === null || index >= values.length ? "null" : `node ${index + 1}`;
+    }
+
+    function visualOrder() {
+      if (done) {
+        return reversedOrder;
+      }
+
+      return [...reversedOrder, ...originalOrder.slice(curr)];
+    }
+
+    function renderList() {
+      listRow.innerHTML = "";
+      const order = visualOrder();
+
+      order.forEach((index, visualIndex) => {
+        const node = document.createElement("div");
+        node.className = "node";
+        node.dataset.label = `node ${index + 1}`;
+        node.textContent = values[index];
+
+        if (done) {
+          node.classList.add("done");
+        } else if (index === prev) {
+          node.classList.add("prev");
+        } else if (index === curr) {
+          node.classList.add("curr");
+        } else if (index === next) {
+          node.classList.add("next");
+        }
+
+        listRow.append(node);
+
+        if (visualIndex < order.length - 1) {
+          const arrow = document.createElement("span");
+          arrow.className = "arrow";
+          arrow.textContent = "->";
+          listRow.append(arrow);
+        }
+      });
+    }
+
+    function renderPointers() {
+      pointerBoard.innerHTML = "";
+
+      [
+        ["prev", nodeLabel(prev), "prev"],
+        ["curr", done ? "null" : nodeLabel(curr), "curr"],
+        ["next", done ? "null" : nodeLabel(next), "next"]
+      ].forEach(([name, value, className]) => {
+        const pointer = document.createElement("span");
+        pointer.className = `pointer ${className}`;
+        pointer.textContent = `${name} = ${value}`;
+        pointerBoard.append(pointer);
+      });
+    }
+
+    function render() {
+      renderList();
+      renderPointers();
+      headLabel.textContent = done ? `head = ${nodeLabel(prev)}` : `head = ${values.length ? "node 1" : "null"}`;
+      stepLabel.textContent = `step ${stepCount}`;
+      listTitle.textContent = done ? "Reversed list" : "Working list";
+      standardExplain.hidden = mode !== "standard";
+      constantExplain.hidden = mode !== "constant";
+      codeBlock.textContent = pseudocode;
+      tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.mode === mode));
+    }
+
+    function reset() {
+      stop();
+      values = parseValues(listInput.value);
+      originalOrder = values.map((_, index) => index);
+      reversedOrder = [];
+      curr = 0;
+      prev = null;
+      next = values.length > 1 ? 1 : null;
+      stepCount = 0;
+      done = values.length === 0;
+      message.textContent = values.length
+        ? "Ready: start with prev = null and curr = head."
+        : "Enter at least one node value.";
+      render();
+    }
+
+    function step() {
+      if (done) {
+        message.textContent = "Done. The list is reversed.";
+        stop();
+        return false;
+      }
+
+      if (curr >= values.length) {
+        done = true;
+        message.textContent = `curr is null, so head becomes ${nodeLabel(prev)}.`;
+        render();
+        stop();
+        return false;
+      }
+
+      next = curr + 1 < values.length ? curr + 1 : null;
+      message.textContent = `Save next, reverse ${nodeLabel(curr)}.next to ${nodeLabel(prev)}, then advance prev and curr.`;
+      reversedOrder.unshift(curr);
+      prev = curr;
+      curr = next === null ? values.length : next;
+      next = curr + 1 < values.length ? curr + 1 : null;
+      stepCount += 1;
+
+      if (curr >= values.length) {
+        done = true;
+        message.textContent = `Last link reversed. New head is ${nodeLabel(prev)}.`;
+      }
+
+      render();
+      return !done;
+    }
+
+    runButton.addEventListener("click", () => {
+      reset();
+      runButton.disabled = true;
+      timer = setInterval(() => {
+        if (!step()) {
+          stop();
+        }
+      }, 900);
+    });
+
+    stepButton.addEventListener("click", () => {
+      if (timer) {
+        stop();
+      }
+      step();
+    });
+
+    resetButton.addEventListener("click", reset);
+    listInput.addEventListener("change", reset);
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        mode = tab.dataset.mode;
+        reset();
+      });
+    });
+
+    reset();
+  </script>
+</body>
+</html>

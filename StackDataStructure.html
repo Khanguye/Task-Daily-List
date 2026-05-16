@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stack Data Structure</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      --ink: #172026;
+      --muted: #5d6972;
+      --page: #edf3f5;
+      --panel: #ffffff;
+      --line: #ccd6dd;
+      --accent: #1261a6;
+      --accent-2: #d46f22;
+      --good: #18794e;
+      --bad: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.05rem);
+      line-height: 1.05;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .simulator,
+    .explain {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 150px;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(18, 97, 166, 0.14);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    button.warn {
+      border-color: var(--bad);
+      background: #fff;
+      color: var(--bad);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      min-height: 420px;
+      padding: 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #f9fbfc;
+    }
+
+    .stack-wrap {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 380px;
+    }
+
+    .row-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: flex-start;
+      gap: 8px;
+      min-height: 340px;
+      padding: 12px;
+      border: 3px solid var(--line);
+      border-top: 0;
+      border-radius: 0 0 10px 10px;
+      background: #fff;
+    }
+
+    .stack-item {
+      display: grid;
+      place-items: center;
+      min-height: 44px;
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      background: #e7f0fb;
+      color: var(--accent);
+      font-weight: 800;
+      animation: slideIn 220ms ease-out;
+    }
+
+    .stack-item.top {
+      border-color: var(--accent-2);
+      background: #fff1df;
+      color: var(--accent-2);
+    }
+
+    .info-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .stat span {
+      color: var(--ink);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .log {
+      min-height: 150px;
+      max-height: 190px;
+      overflow: auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .log p {
+      margin: 0 0 8px;
+    }
+
+    .message {
+      min-height: 28px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .message.good {
+      color: var(--good);
+    }
+
+    .message.bad {
+      color: var(--bad);
+    }
+
+    .explain {
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    code {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #172026;
+      color: #f7fbfd;
+      font-size: 0.9rem;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .layout,
+      .stage,
+      .inputs {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>StackDataStructure</h1>
+      <p>Demo a stack with all core operations: push, pop, peek, size, isEmpty, isFull, and clear.</p>
+    </header>
+
+    <div class="layout">
+      <section class="simulator">
+        <div class="inputs">
+          <label>
+            Value
+            <input id="value-input" value="A" aria-label="Stack value">
+          </label>
+          <label>
+            Capacity
+            <input id="capacity-input" type="number" min="1" max="12" value="6" aria-label="Stack capacity">
+          </label>
+        </div>
+
+        <div class="buttons">
+          <button id="push" type="button">Push</button>
+          <button id="pop" class="secondary" type="button">Pop</button>
+          <button id="peek" class="secondary" type="button">Peek</button>
+          <button id="empty" class="secondary" type="button">isEmpty</button>
+          <button id="full" class="secondary" type="button">isFull</button>
+          <button id="size" class="secondary" type="button">Size</button>
+          <button id="clear" class="warn" type="button">Clear</button>
+        </div>
+
+        <div class="stage">
+          <div class="stack-wrap">
+            <div class="row-title">
+              <span>Stack</span>
+              <span>LIFO</span>
+            </div>
+            <div id="stack" class="stack" aria-label="Stack visualization"></div>
+          </div>
+
+          <div class="info-panel">
+            <div class="stat-grid">
+              <div class="stat">
+                <strong>Top</strong>
+                <span id="top-stat">null</span>
+              </div>
+              <div class="stat">
+                <strong>Size</strong>
+                <span id="size-stat">0</span>
+              </div>
+              <div class="stat">
+                <strong>Capacity</strong>
+                <span id="capacity-stat">6</span>
+              </div>
+              <div class="stat">
+                <strong>State</strong>
+                <span id="state-stat">empty</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="row-title">
+                <span>Operation Log</span>
+                <span>latest first</span>
+              </div>
+              <div id="log" class="log" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="message" class="message" aria-live="polite">Ready.</div>
+      </section>
+
+      <aside class="explain">
+        <div class="explain-block">
+          <h2>Stack Rule</h2>
+          <p>A stack is <code>LIFO</code>: last in, first out. New values are added at the top, and removal also happens at the top.</p>
+        </div>
+
+        <div class="explain-block">
+          <h2>Operations</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Meaning</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>push(x)</code></td><td>Add value to top.</td><td><code>O(1)</code></td></tr>
+              <tr><td><code>pop()</code></td><td>Remove and return top.</td><td><code>O(1)</code></td></tr>
+              <tr><td><code>peek()</code></td><td>Read top without removing.</td><td><code>O(1)</code></td></tr>
+              <tr><td><code>isEmpty()</code></td><td>Check whether size is zero.</td><td><code>O(1)</code></td></tr>
+              <tr><td><code>isFull()</code></td><td>Check whether size reached capacity.</td><td><code>O(1)</code></td></tr>
+              <tr><td><code>size()</code></td><td>Return number of elements.</td><td><code>O(1)</code></td></tr>
+              <tr><td><code>clear()</code></td><td>Remove all elements.</td><td><code>O(n)</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="explain-block">
+          <h2>Pseudocode</h2>
+          <pre><code>push(x):
+  if isFull(): error overflow
+  top = top + 1
+  stack[top] = x
+
+pop():
+  if isEmpty(): error underflow
+  value = stack[top]
+  top = top - 1
+  return value
+
+peek():
+  if isEmpty(): return null
+  return stack[top]</code></pre>
+        </div>
+
+        <div class="explain-block">
+          <h2>Space</h2>
+          <p>The stack stores up to <code>capacity</code> elements, so storage is <code>O(n)</code>. Each individual operation uses <code>O(1)</code> extra working space.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const valueInput = document.querySelector("#value-input");
+    const capacityInput = document.querySelector("#capacity-input");
+    const stackElement = document.querySelector("#stack");
+    const topStat = document.querySelector("#top-stat");
+    const sizeStat = document.querySelector("#size-stat");
+    const capacityStat = document.querySelector("#capacity-stat");
+    const stateStat = document.querySelector("#state-stat");
+    const logElement = document.querySelector("#log");
+    const message = document.querySelector("#message");
+    const buttons = {
+      push: document.querySelector("#push"),
+      pop: document.querySelector("#pop"),
+      peek: document.querySelector("#peek"),
+      empty: document.querySelector("#empty"),
+      full: document.querySelector("#full"),
+      size: document.querySelector("#size"),
+      clear: document.querySelector("#clear")
+    };
+
+    let stack = [];
+    let logs = [];
+
+    function capacity() {
+      return Math.max(1, Number(capacityInput.value) || 1);
+    }
+
+    function addLog(text) {
+      logs.unshift(text);
+      logs = logs.slice(0, 8);
+      renderLog();
+    }
+
+    function setMessage(text, type = "") {
+      message.className = `message ${type}`;
+      message.textContent = text;
+    }
+
+    function renderStack() {
+      stackElement.innerHTML = "";
+
+      stack.forEach((value, index) => {
+        const item = document.createElement("div");
+        item.className = "stack-item";
+        item.classList.toggle("top", index === stack.length - 1);
+        item.textContent = value;
+        stackElement.append(item);
+      });
+    }
+
+    function renderStats() {
+      const top = stack.length ? stack[stack.length - 1] : "null";
+      topStat.textContent = top;
+      sizeStat.textContent = stack.length;
+      capacityStat.textContent = capacity();
+      stateStat.textContent = stack.length === 0 ? "empty" : stack.length >= capacity() ? "full" : "ready";
+    }
+
+    function renderLog() {
+      logElement.innerHTML = "";
+
+      logs.forEach((entry) => {
+        const line = document.createElement("p");
+        line.textContent = entry;
+        logElement.append(line);
+      });
+    }
+
+    function render() {
+      if (stack.length > capacity()) {
+        stack = stack.slice(0, capacity());
+      }
+
+      renderStack();
+      renderStats();
+      renderLog();
+    }
+
+    function push() {
+      const value = valueInput.value.trim();
+
+      if (!value) {
+        setMessage("Enter a value before push.", "bad");
+        return;
+      }
+
+      if (stack.length >= capacity()) {
+        setMessage("Overflow: stack is full.", "bad");
+        addLog(`push(${value}) blocked: overflow`);
+        return;
+      }
+
+      stack.push(value);
+      setMessage(`Pushed ${value} onto the top.`, "good");
+      addLog(`push(${value})`);
+      valueInput.value = nextValue(value);
+      render();
+    }
+
+    function pop() {
+      if (!stack.length) {
+        setMessage("Underflow: stack is empty.", "bad");
+        addLog("pop() blocked: underflow");
+        return;
+      }
+
+      const value = stack.pop();
+      setMessage(`Popped ${value} from the top.`, "good");
+      addLog(`pop() -> ${value}`);
+      render();
+    }
+
+    function peek() {
+      const value = stack.length ? stack[stack.length - 1] : "null";
+      setMessage(`peek() returns ${value}.`, stack.length ? "good" : "bad");
+      addLog(`peek() -> ${value}`);
+    }
+
+    function isEmpty() {
+      const result = stack.length === 0;
+      setMessage(`isEmpty() returns ${result}.`, result ? "good" : "");
+      addLog(`isEmpty() -> ${result}`);
+    }
+
+    function isFull() {
+      const result = stack.length >= capacity();
+      setMessage(`isFull() returns ${result}.`, result ? "bad" : "");
+      addLog(`isFull() -> ${result}`);
+    }
+
+    function size() {
+      setMessage(`size() returns ${stack.length}.`);
+      addLog(`size() -> ${stack.length}`);
+    }
+
+    function clear() {
+      stack = [];
+      setMessage("Cleared the stack.", "good");
+      addLog("clear()");
+      render();
+    }
+
+    function nextValue(value) {
+      if (/^[A-Z]$/i.test(value)) {
+        const code = value.toUpperCase().charCodeAt(0);
+        return String.fromCharCode(code >= 90 ? 65 : code + 1);
+      }
+
+      if (/^\d+$/.test(value)) {
+        return String(Number(value) + 1);
+      }
+
+      return value;
+    }
+
+    buttons.push.addEventListener("click", push);
+    buttons.pop.addEventListener("click", pop);
+    buttons.peek.addEventListener("click", peek);
+    buttons.empty.addEventListener("click", isEmpty);
+    buttons.full.addEventListener("click", isFull);
+    buttons.size.addEventListener("click", size);
+    buttons.clear.addEventListener("click", clear);
+    capacityInput.addEventListener("change", render);
+    valueInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        push();
+      }
+    });
+
+    addLog("Stack initialized");
+    render();
+  </script>
+</body>
+</html>
